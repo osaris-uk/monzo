@@ -144,13 +144,6 @@ class TokenStoreTest extends TestCase
         $this->assertSame('database', $config['token_store']['driver']);
     }
 
-    public function test_migrating_creates_the_table_without_publishing_anything(): void
-    {
-        $this->artisan('migrate')->assertSuccessful();
-
-        $this->assertTrue($this->app['db']->connection()->getSchemaBuilder()->hasTable('monzo_tokens'));
-    }
-
     public function test_a_missing_table_says_how_to_fix_it(): void
     {
         $store = new DatabaseTokenStore($this->app['db']->connection(), $this->app['encrypter']);

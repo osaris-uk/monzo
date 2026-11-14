@@ -102,6 +102,44 @@ MONZO_TOKEN_DB_CONNECTION=    # optional, defaults to your default connection
 
 On a single server you can keep the token in an encrypted file instead, at `storage/app/monzo/token.json`, with `MONZO_TOKEN_STORE=file`. You can also use `cache` or `array`, or give the class name of your own `Osaris\Monzo\Contracts\TokenStore` in `monzo.token_store.driver`.
 
+#### Keeping the token in your own OAuth integrations table
+
+Monzo is only OAuth, so if your app already keeps tokens for other services in one table, the Monzo token can live there too. Give the package a class implementing `Osaris\Monzo\Contracts\TokenStore` and it uses that instead. The package then doesn't run its own migration, so you won't get an empty `monzo_tokens` table.
+
+Working example files are in [`examples/oauth-integrations`](examples/oauth-integrations), and the package's own tests run them as written.
+
+1. **The table.** Copy [`2026_11_14_000000_create_oauth_integrations_table.php`](examples/oauth-integrations/2026_11_14_000000_create_oauth_integrations_table.php) into `database/migrations`. It has one row per `provider` and `account`, so `monzo` sits beside any other service, and you can connect more than one Monzo account if you need to. If you already have a table like this, skip this step and adjust the next two to its columns.
+
+2. **The model.** Copy [`OAuthIntegration.php`](examples/oauth-integrations/OAuthIntegration.php) into `app/Models`. Its `encrypted` casts keep the tokens encrypted with `APP_KEY`, and `$hidden` keeps them out of arrays, JSON and logs.
+
+3. **The store.** Copy [`MonzoIntegrationTokenStore.php`](examples/oauth-integrations/MonzoIntegrationTokenStore.php) into `app/Support/Monzo`. It implements three methods:
+
+   ```php
+   public function get(): ?AccessToken;          // the stored token, or null
+   public function put(AccessToken $token): void; // after connecting, and after every refresh
+   public function forget(): void;               // on monzo:logout
+   ```
+
+   `put()` must replace the existing row, not add another. Monzo invalidates the old refresh token on every refresh, so only the newest one works.
+
+4. **Point the package at it.** Publish the config (`php artisan vendor:publish --tag=monzo-config`), then name the class in `config/monzo.php`. Use the config file rather than `.env`, because a class name is code, not a setting:
+
+   ```php
+   'token_store' => [
+       'driver' => \App\Support\Monzo\MonzoIntegrationTokenStore::class,
+       // ...
+   ],
+   ```
+
+5. **Migrate and connect** as usual:
+
+   ```bash
+   php artisan migrate
+   php artisan monzo:authorize
+   ```
+
+The package resolves your store from the container, so its constructor can ask for whatever it needs. To keep a second Monzo account, bind another instance with a different `account`. If the class doesn't exist or doesn't implement `TokenStore`, the package throws a `ConfigurationException` naming it.
+
 Expired tokens are refreshed before a request, and a `401` triggers one refresh and a retry. Monzo invalidates the old refresh token on every refresh, so refreshes run under a cache lock. If the app sits idle, schedule a refresh so the token never goes stale:
 
 ```php

@@ -9,6 +9,7 @@ use Illuminate\Support\ServiceProvider;
 use Osaris\Monzo\Auth\OAuth;
 use Osaris\Monzo\Auth\TokenManager;
 use Osaris\Monzo\Contracts\TokenStore;
+use Osaris\Monzo\Exceptions\ConfigurationException;
 use Osaris\Monzo\Http\Controllers\OAuthController;
 use Osaris\Monzo\Http\Controllers\WebhookController;
 use Osaris\Monzo\TokenStores\ArrayTokenStore;
@@ -56,11 +57,14 @@ class MonzoServiceProvider extends ServiceProvider
             ], 'monzo-config');
 
             /*
-             * Run by default, so `php artisan migrate` is all the default
-             * database store needs. An app that publishes the migration to
-             * change it turns this off, or it would run twice.
+             * Run for the database store only, so `php artisan migrate` is
+             * all it needs -- and an app keeping the token somewhere of its
+             * own does not get an empty monzo_tokens table it never uses. An
+             * app that publishes the migration to change it turns this off,
+             * or it would run twice.
              */
-            if (filter_var($this->app['config']['monzo.token_store.migrations'] ?? true, FILTER_VALIDATE_BOOL)) {
+            if (($this->app['config']['monzo.token_store.driver'] ?? 'database') === 'database'
+                && filter_var($this->app['config']['monzo.token_store.migrations'] ?? true, FILTER_VALIDATE_BOOL)) {
                 $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
             }
 
@@ -129,7 +133,27 @@ class MonzoServiceProvider extends ServiceProvider
                 $config['key'] ?? 'default',
             ),
             'array' => new ArrayTokenStore,
-            default => $app->make($driver),
+            default => $this->customTokenStore($app, $driver),
         };
+    }
+
+    /**
+     * The app's own store, named by class in monzo.token_store.driver and
+     * resolved from the container -- so it can keep the token wherever the
+     * app keeps its others, such as a shared OAuth integrations table.
+     */
+    protected function customTokenStore(Application $app, string $driver): TokenStore
+    {
+        if (! class_exists($driver) && ! $app->bound($driver)) {
+            throw new ConfigurationException("Unknown Monzo token store [{$driver}]. Use database, file, cache, array, or the class name of your own TokenStore.");
+        }
+
+        $store = $app->make($driver);
+
+        if (! $store instanceof TokenStore) {
+            throw new ConfigurationException(sprintf('The Monzo token store [%s] must implement %s.', $driver, TokenStore::class));
+        }
+
+        return $store;
     }
 }

@@ -85,16 +85,19 @@ return [
     | Drivers: "database" (an encrypted row in monzo_tokens, the default),
     | "file" (an encrypted JSON file), "cache", "array" (in-memory, for
     | tests), or the class name of your own implementation of
-    | Osaris\Monzo\Contracts\TokenStore.
+    | Osaris\Monzo\Contracts\TokenStore -- to keep the token in a table the
+    | app already has for its OAuth connections, for example. Name a class
+    | here rather than in .env: \App\Support\Monzo\YourStore::class.
     |
     | The database is the default because it is the one every server and
     | container sees. Monzo invalidates the old refresh token on every
     | refresh, so with a store each process keeps its own copy of, the first
     | refresh signs every other copy out.
     |
-    | The package runs its own migration for the table: `php artisan migrate`
-    | is all it needs. Set migrations to false if you publish the migration
-    | (--tag=monzo-migrations) to change it, or if you never use this driver.
+    | With the database driver the package runs its own migration for the
+    | table: `php artisan migrate` is all it needs. Set migrations to false
+    | if you publish the migration (--tag=monzo-migrations) to change it.
+    | Any other driver, and the migration does not run.
     |
     */
 
