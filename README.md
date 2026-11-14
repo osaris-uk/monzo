@@ -1,5 +1,9 @@
 # osaris-uk/monzo
 
+[![Latest version](https://img.shields.io/packagist/v/osaris-uk/monzo.svg)](https://packagist.org/packages/osaris-uk/monzo)
+[![Tests](https://github.com/osaris-uk/monzo/actions/workflows/tests.yml/badge.svg)](https://github.com/osaris-uk/monzo/actions/workflows/tests.yml)
+[![License](https://img.shields.io/packagist/l/osaris-uk/monzo.svg)](LICENSE)
+
 A Laravel package for the [Monzo Developer API](https://docs.monzo.com). It covers every documented endpoint, refreshes tokens automatically, works with business accounts, and includes OAuth routes, webhook events and Artisan commands.
 
 > **Who it's for:** the Monzo Developer API only lets you connect your own account or a small set of users you explicitly allow. It isn't meant for public apps. Those need Monzo's Open Banking API, which requires FCA authorisation.
@@ -22,17 +26,20 @@ A Laravel package for the [Monzo Developer API](https://docs.monzo.com). It cove
 
 Requires PHP 8.2+ and Laravel 11, 12 or 13.
 
+> **Laravel 11:** the package still installs on Laravel 11, but CI only tests Laravel 12 and 13, because the Laravel 11 jobs fail on a security advisory affecting Laravel 11 dependencies. It should work, but it isn't tested. If you're still on Laravel 11, upgrading is recommended.
+
 ## Install
+
+The package is on [Packagist](https://packagist.org/packages/osaris-uk/monzo). Install it with Composer:
 
 ```bash
 composer require osaris-uk/monzo
-php artisan vendor:publish --tag=monzo-config
 ```
 
-To use it from a local checkout or a private repo before it's on Packagist, add the repository to your app's `composer.json`:
+Laravel finds the service provider and the `Monzo` facade automatically. To change any defaults, publish the config file to `config/monzo.php`:
 
-```json
-"repositories": [{ "type": "vcs", "url": "git@github.com:osaris-uk/monzo.git" }]
+```bash
+php artisan vendor:publish --tag=monzo-config
 ```
 
 ## Configure
