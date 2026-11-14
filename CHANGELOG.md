@@ -4,6 +4,8 @@ All notable changes to this package are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-14
+
 ### Added
 
 - A `database` token store, for apps where more than one server or container calls Monzo without a shared disk. Publish its migration with `php artisan vendor:publish --tag=monzo-migrations`.
@@ -21,5 +23,6 @@ All notable changes to this package are documented here. The format follows [Kee
 - Artisan commands: `monzo:authorize`, `monzo:whoami`, `monzo:accounts`, `monzo:refresh`, `monzo:webhooks` and `monzo:logout`.
 - Encrypted file and cache token stores, plus support for your own `TokenStore`.
 
-[Unreleased]: https://github.com/osaris-uk/monzo/compare/1.0.0...HEAD
+[Unreleased]: https://github.com/osaris-uk/monzo/compare/1.1.0...HEAD
+[1.1.0]: https://github.com/osaris-uk/monzo/compare/1.0.0...1.1.0
 [1.0.0]: https://github.com/osaris-uk/monzo/releases/tag/1.0.0
