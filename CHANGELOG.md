@@ -4,6 +4,11 @@ All notable changes to this package are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Changed
+
+- The `database` token store is now the default, and the package runs its own migration for it, so `php artisan migrate` is all it needs. Set `MONZO_TOKEN_STORE=file` to keep the token in a file. Set `MONZO_RUN_MIGRATIONS=false` if you publish the migration to change it.
+- A missing `monzo_tokens` table now says to run `php artisan migrate` rather than raising a bare SQL error.
+
 ## [1.1.0] - 2026-11-14
 
 ### Added

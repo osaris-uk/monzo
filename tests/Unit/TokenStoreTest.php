@@ -6,6 +6,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Encryption\Encrypter;
 use Illuminate\Filesystem\Filesystem;
 use Osaris\Monzo\Auth\AccessToken;
+use Osaris\Monzo\Exceptions\ConfigurationException;
 use Osaris\Monzo\Exceptions\TokenDecryptionException;
 use Illuminate\Support\ServiceProvider;
 use Osaris\Monzo\Contracts\TokenStore;
@@ -133,12 +134,36 @@ class TokenStoreTest extends TestCase
         $paths = ServiceProvider::pathsToPublish(MonzoServiceProvider::class, 'monzo-migrations');
 
         $this->assertCount(1, $paths);
-        $this->assertFileExists(array_key_first($paths).'/create_monzo_tokens_table.php.stub');
+        $this->assertFileExists(array_key_first($paths).'/2026_11_14_000000_create_monzo_tokens_table.php');
+    }
+
+    public function test_the_database_is_the_default_store(): void
+    {
+        $config = require __DIR__.'/../../config/monzo.php';
+
+        $this->assertSame('database', $config['token_store']['driver']);
+    }
+
+    public function test_migrating_creates_the_table_without_publishing_anything(): void
+    {
+        $this->artisan('migrate')->assertSuccessful();
+
+        $this->assertTrue($this->app['db']->connection()->getSchemaBuilder()->hasTable('monzo_tokens'));
+    }
+
+    public function test_a_missing_table_says_how_to_fix_it(): void
+    {
+        $store = new DatabaseTokenStore($this->app['db']->connection(), $this->app['encrypter']);
+
+        $this->expectException(ConfigurationException::class);
+        $this->expectExceptionMessage('Run php artisan migrate');
+
+        $store->get();
     }
 
     protected function createTokensTable(): void
     {
-        (require __DIR__.'/../../database/migrations/create_monzo_tokens_table.php.stub')->up();
+        (require __DIR__.'/../../database/migrations/2026_11_14_000000_create_monzo_tokens_table.php')->up();
     }
 
     public function test_token_expiry_with_leeway(): void

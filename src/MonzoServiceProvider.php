@@ -55,6 +55,15 @@ class MonzoServiceProvider extends ServiceProvider
                 __DIR__.'/../config/monzo.php' => config_path('monzo.php'),
             ], 'monzo-config');
 
+            /*
+             * Run by default, so `php artisan migrate` is all the default
+             * database store needs. An app that publishes the migration to
+             * change it turns this off, or it would run twice.
+             */
+            if (filter_var($this->app['config']['monzo.token_store.migrations'] ?? true, FILTER_VALIDATE_BOOL)) {
+                $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+            }
+
             $this->publishesMigrations([
                 __DIR__.'/../database/migrations' => database_path('migrations'),
             ], 'monzo-migrations');

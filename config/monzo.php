@@ -82,25 +82,31 @@ return [
     |
     | Where the OAuth token is persisted between requests.
     |
-    | Drivers: "file" (encrypted JSON file, the default), "database"
-    | (encrypted row, publish the migration with --tag=monzo-migrations),
-    | "cache", "array" (in-memory, for tests), or the class name of your own
-    | implementation of Osaris\Monzo\Contracts\TokenStore.
+    | Drivers: "database" (an encrypted row in monzo_tokens, the default),
+    | "file" (an encrypted JSON file), "cache", "array" (in-memory, for
+    | tests), or the class name of your own implementation of
+    | Osaris\Monzo\Contracts\TokenStore.
     |
-    | Use "file" on a single server: a cache clear will not sign you out. Use
-    | "database" when more than one server or container calls Monzo without a
-    | shared disk -- the first refresh would otherwise sign the others out.
+    | The database is the default because it is the one every server and
+    | container sees. Monzo invalidates the old refresh token on every
+    | refresh, so with a store each process keeps its own copy of, the first
+    | refresh signs every other copy out.
+    |
+    | The package runs its own migration for the table: `php artisan migrate`
+    | is all it needs. Set migrations to false if you publish the migration
+    | (--tag=monzo-migrations) to change it, or if you never use this driver.
     |
     */
 
     'token_store' => [
-        'driver' => env('MONZO_TOKEN_STORE', 'file'),
+        'driver' => env('MONZO_TOKEN_STORE', 'database'),
         'path' => storage_path('app/monzo/token.json'),
         'cache_store' => env('MONZO_TOKEN_CACHE_STORE'),
         'cache_key' => 'monzo.token',
         'connection' => env('MONZO_TOKEN_DB_CONNECTION'),
         'table' => 'monzo_tokens',
         'key' => 'default',
+        'migrations' => env('MONZO_RUN_MIGRATIONS', true),
     ],
 
     /*

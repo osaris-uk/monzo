@@ -81,23 +81,26 @@ Copy your business account's ID into `MONZO_ACCOUNT_ID` if you want it as the de
 
 ### Tokens
 
-Tokens are stored in an **encrypted file** at `storage/app/monzo/token.json` by default, so clearing the cache won't sign you out. That suits a single server.
-
-**If more than one server or container calls Monzo**, for example a web container and a queue worker without a shared disk, use the `database` driver instead. With the file store each one keeps its own copy of the token, and because Monzo invalidates the old refresh token on every refresh, the first refresh signs all the other copies out.
+Tokens are stored **encrypted in the database**, in a `monzo_tokens` table. The package runs its own migration, so all it needs is:
 
 ```bash
-php artisan vendor:publish --tag=monzo-migrations
 php artisan migrate
 ```
 
+The database is the default because every server and container sees the same row. Monzo invalidates the old refresh token on every refresh, so with a store each process keeps its own copy of, such as a file on a disk the web server and queue worker don't share, the first refresh signs every other copy out. Refreshes are guarded by a lock on your default cache store, so when more than one process calls Monzo, that store must be shared too (Redis, Memcached or the database cache, not `file` or `array`).
+
+To change the migration, publish it and stop the package running its own:
+
+```bash
+php artisan vendor:publish --tag=monzo-migrations
+```
+
 ```dotenv
-MONZO_TOKEN_STORE=database
+MONZO_RUN_MIGRATIONS=false
 MONZO_TOKEN_DB_CONNECTION=    # optional, defaults to your default connection
 ```
 
-The token is kept encrypted in the `monzo_tokens` table. Refreshes are guarded by a lock on your default cache store, so in the same setup that store must be shared too (Redis, Memcached or the database cache, not `file` or `array`).
-
-You can also use `cache` or `array`, or give the class name of your own `Osaris\Monzo\Contracts\TokenStore` in `monzo.token_store.driver`.
+On a single server you can keep the token in an encrypted file instead, at `storage/app/monzo/token.json`, with `MONZO_TOKEN_STORE=file`. You can also use `cache` or `array`, or give the class name of your own `Osaris\Monzo\Contracts\TokenStore` in `monzo.token_store.driver`.
 
 Expired tokens are refreshed before a request, and a `401` triggers one refresh and a retry. Monzo invalidates the old refresh token on every refresh, so refreshes run under a cache lock. If the app sits idle, schedule a refresh so the token never goes stale:
 
