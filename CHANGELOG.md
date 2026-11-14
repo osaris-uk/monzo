@@ -4,6 +4,10 @@ All notable changes to this package are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Fixed
+
+- Installs alongside Guzzle 8, which Laravel 13 apps can have. The package only uses Guzzle through Laravel's HTTP client, so `guzzlehttp/guzzle` now allows `^7.8|^8.0`.
+
 ## [1.2.0] - 2026-11-14
 
 ### Changed
