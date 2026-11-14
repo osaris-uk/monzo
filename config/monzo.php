@@ -82,11 +82,14 @@ return [
     |
     | Where the OAuth token is persisted between requests.
     |
-    | Drivers: "file" (encrypted JSON file, the default), "cache", "array"
-    | (in-memory, for tests), or the class name of your own implementation
-    | of Osaris\Monzo\Contracts\TokenStore resolved from the container.
+    | Drivers: "file" (encrypted JSON file, the default), "database"
+    | (encrypted row, publish the migration with --tag=monzo-migrations),
+    | "cache", "array" (in-memory, for tests), or the class name of your own
+    | implementation of Osaris\Monzo\Contracts\TokenStore.
     |
-    | The file driver is recommended: a cache clear will not sign you out.
+    | Use "file" on a single server: a cache clear will not sign you out. Use
+    | "database" when more than one server or container calls Monzo without a
+    | shared disk -- the first refresh would otherwise sign the others out.
     |
     */
 
@@ -95,6 +98,9 @@ return [
         'path' => storage_path('app/monzo/token.json'),
         'cache_store' => env('MONZO_TOKEN_CACHE_STORE'),
         'cache_key' => 'monzo.token',
+        'connection' => env('MONZO_TOKEN_DB_CONNECTION'),
+        'table' => 'monzo_tokens',
+        'key' => 'default',
     ],
 
     /*

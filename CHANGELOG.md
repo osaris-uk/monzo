@@ -6,6 +6,20 @@ All notable changes to this package are documented here. The format follows [Kee
 
 ### Added
 
+- A `database` token store, for apps where more than one server or container calls Monzo without a shared disk. Publish its migration with `php artisan vendor:publish --tag=monzo-migrations`.
+
+### Documentation
+
+- When to use the `database` token store instead of the default file store, and that the refresh lock needs a shared cache store in the same setup.
+- The webhook secret is part of the URL, so it appears in access logs and error trackers. How to keep it out of them, and how to rotate it.
+
+## [1.0.0] - 2026-11-14
+
+### Added
+
 - First release: OAuth with automatic token refresh, accounts (business included), balance, pots, transactions, feed items, attachments, receipts and webhooks.
 - Artisan commands: `monzo:authorize`, `monzo:whoami`, `monzo:accounts`, `monzo:refresh`, `monzo:webhooks` and `monzo:logout`.
 - Encrypted file and cache token stores, plus support for your own `TokenStore`.
+
+[Unreleased]: https://github.com/osaris-uk/monzo/compare/1.0.0...HEAD
+[1.0.0]: https://github.com/osaris-uk/monzo/releases/tag/1.0.0

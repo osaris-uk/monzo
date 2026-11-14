@@ -81,7 +81,23 @@ Copy your business account's ID into `MONZO_ACCOUNT_ID` if you want it as the de
 
 ### Tokens
 
-Tokens are stored in an **encrypted file** at `storage/app/monzo/token.json` by default, so clearing the cache won't sign you out. You can switch to `cache` or `array`, or give the class name of your own `Osaris\Monzo\Contracts\TokenStore` (for example, a database-backed one) in `monzo.token_store.driver`.
+Tokens are stored in an **encrypted file** at `storage/app/monzo/token.json` by default, so clearing the cache won't sign you out. That suits a single server.
+
+**If more than one server or container calls Monzo**, for example a web container and a queue worker without a shared disk, use the `database` driver instead. With the file store each one keeps its own copy of the token, and because Monzo invalidates the old refresh token on every refresh, the first refresh signs all the other copies out.
+
+```bash
+php artisan vendor:publish --tag=monzo-migrations
+php artisan migrate
+```
+
+```dotenv
+MONZO_TOKEN_STORE=database
+MONZO_TOKEN_DB_CONNECTION=    # optional, defaults to your default connection
+```
+
+The token is kept encrypted in the `monzo_tokens` table. Refreshes are guarded by a lock on your default cache store, so in the same setup that store must be shared too (Redis, Memcached or the database cache, not `file` or `array`).
+
+You can also use `cache` or `array`, or give the class name of your own `Osaris\Monzo\Contracts\TokenStore` in `monzo.token_store.driver`.
 
 Expired tokens are refreshed before a request, and a `401` triggers one refresh and a retry. Monzo invalidates the old refresh token on every refresh, so refreshes run under a cache lock. If the app sits idle, schedule a refresh so the token never goes stale:
 
@@ -240,6 +256,8 @@ Event::listen(function (WebhookReceived $event) {
 ```
 
 Monzo doesn't sign webhooks, which is why the secret lives in the URL. Monzo retries failed deliveries up to 5 times, so make your listeners idempotent (key them on `$tx->id`). For slow work, use queued listeners.
+
+Because the secret is part of the URL, **it ends up anywhere URLs are logged**: your web server's access log, a load balancer or CDN, and error trackers that record the request URL. Anyone who can read those logs can post fake events. Keep those logs private, strip or mask the path in them if you can, and rotate the secret if they leak: set a new `MONZO_WEBHOOK_SECRET`, then run `php artisan monzo:webhooks clear` and `php artisan monzo:webhooks register`. Treat webhook events as a prompt to fetch the transaction, not as the source of truth: `Monzo::transactions()->find($event->transaction->id)` only returns what Monzo really has.
 
 ### Other events
 

@@ -13,6 +13,7 @@ use Osaris\Monzo\Http\Controllers\OAuthController;
 use Osaris\Monzo\Http\Controllers\WebhookController;
 use Osaris\Monzo\TokenStores\ArrayTokenStore;
 use Osaris\Monzo\TokenStores\CacheTokenStore;
+use Osaris\Monzo\TokenStores\DatabaseTokenStore;
 use Osaris\Monzo\TokenStores\FileTokenStore;
 
 class MonzoServiceProvider extends ServiceProvider
@@ -53,6 +54,10 @@ class MonzoServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__.'/../config/monzo.php' => config_path('monzo.php'),
             ], 'monzo-config');
+
+            $this->publishesMigrations([
+                __DIR__.'/../database/migrations' => database_path('migrations'),
+            ], 'monzo-migrations');
 
             $this->commands([
                 Console\AuthorizeCommand::class,
@@ -107,6 +112,12 @@ class MonzoServiceProvider extends ServiceProvider
                 $app['cache']->store($config['cache_store'] ?? null),
                 $app['encrypter'],
                 $config['cache_key'] ?? 'monzo.token',
+            ),
+            'database' => new DatabaseTokenStore(
+                $app['db']->connection($config['connection'] ?? null),
+                $app['encrypter'],
+                $config['table'] ?? 'monzo_tokens',
+                $config['key'] ?? 'default',
             ),
             'array' => new ArrayTokenStore,
             default => $app->make($driver),
