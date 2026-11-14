@@ -4,6 +4,8 @@ All notable changes to this package are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-11-14
+
 ### Fixed
 
 - Installs alongside Guzzle 8, which Laravel 13 apps can have. The package only uses Guzzle through Laravel's HTTP client, so `guzzlehttp/guzzle` now allows `^7.8|^8.0`.
@@ -40,7 +42,8 @@ All notable changes to this package are documented here. The format follows [Kee
 - Artisan commands: `monzo:authorize`, `monzo:whoami`, `monzo:accounts`, `monzo:refresh`, `monzo:webhooks` and `monzo:logout`.
 - Encrypted file and cache token stores, plus support for your own `TokenStore`.
 
-[Unreleased]: https://github.com/osaris-uk/monzo/compare/1.2.0...HEAD
+[Unreleased]: https://github.com/osaris-uk/monzo/compare/1.2.1...HEAD
+[1.2.1]: https://github.com/osaris-uk/monzo/compare/1.2.0...1.2.1
 [1.2.0]: https://github.com/osaris-uk/monzo/compare/1.1.0...1.2.0
 [1.1.0]: https://github.com/osaris-uk/monzo/compare/1.0.0...1.1.0
 [1.0.0]: https://github.com/osaris-uk/monzo/releases/tag/1.0.0
