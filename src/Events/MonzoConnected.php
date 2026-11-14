@@ -1,0 +1,14 @@
+<?php
+
+namespace Osaris\Monzo\Events;
+
+use Osaris\Monzo\Auth\AccessToken;
+
+/**
+ * Fired after the OAuth flow finishes and the token is stored.
+ * The user still has to approve access in the Monzo app before most calls work.
+ */
+class MonzoConnected
+{
+    public function __construct(public readonly AccessToken $token) {}
+}
